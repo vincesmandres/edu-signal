@@ -90,7 +90,7 @@ Esta estructura es una propuesta inicial y puede ajustarse cuando se defina el s
 
 ## Estado Actual
 
-El proyecto se encuentra en fase de definicion. Aun no hay una implementacion funcional publicada en este repositorio.
+El proyecto cuenta con autenticación, un espacio docente inicial y persistencia para aulas, módulos y evaluaciones. Consulta [la arquitectura inicial](docs/architecture.md) para el modelo pedagógico y la ruta de migración futura a Vercel.
 
 ## Como Contribuir
 
