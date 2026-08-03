@@ -6,6 +6,9 @@
   "assets": {
     "directory": "dist/client"
   },
+  "vars": {
+    "PUBLIC_DEMO_MODE": "true"
+  },
   "d1_databases": [
     {
       "binding": "DB",
