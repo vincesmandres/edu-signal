@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 const timestamps = {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
@@ -10,9 +10,18 @@ export const educators = sqliteTable("educators", {
   id: text("id").primaryKey(),
   email: text("email").notNull(),
   displayName: text("display_name").notNull(),
+  passwordHash: text("password_hash"),
   role: text("role").notNull().default("teacher"),
   ...timestamps,
-}, (table) => [index("idx_educators_email").on(table.email)]);
+}, (table) => [index("idx_educators_email").on(table.email), uniqueIndex("uq_educators_email").on(table.email)]);
+
+export const sessions = sqliteTable("sessions", {
+  id: text("id").primaryKey(),
+  educatorId: text("educator_id").notNull().references(() => educators.id),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: text("expires_at").notNull(),
+  ...timestamps,
+}, (table) => [index("idx_sessions_educator").on(table.educatorId), index("idx_sessions_expiry").on(table.expiresAt)]);
 
 export const classrooms = sqliteTable("classrooms", {
   id: text("id").primaryKey(),

@@ -15,6 +15,13 @@
       "when": 1785789910359,
       "tag": "0001_lyrical_gauntlet",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785790272711,
+      "tag": "0002_chunky_carlie_cooper",
+      "breakpoints": true
     }
   ]
 }
