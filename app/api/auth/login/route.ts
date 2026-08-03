@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
 import { educators, sessions } from "../../../../db/schema";
 import { createSessionToken, sessionCookie, sha256, SESSION_DAYS, verifyPassword } from "../../../chatgpt-auth";
+import { recordAudit } from "../../../audit";
 
 export async function POST(request: Request) {
   const body = await request.json() as { email?: string; password?: string };
@@ -13,5 +14,6 @@ export async function POST(request: Request) {
   if (!educator?.passwordHash || !(await verifyPassword(body.password, educator.passwordHash))) return Response.json({ error: "Correo o contraseña incorrectos." }, { status: 401 });
   const token = createSessionToken();
   await db.insert(sessions).values({ id: crypto.randomUUID(), educatorId: educator.id, tokenHash: await sha256(token), expiresAt: new Date(Date.now() + SESSION_DAYS * 86400000).toISOString() });
+  await recordAudit({ actorId: educator.id, action: "session.created", entityType: "educator", entityId: educator.id });
   return new Response(JSON.stringify({ user: { id: educator.id, displayName: educator.displayName, email: educator.email, role: educator.role } }), { headers: { "content-type": "application/json", "cache-control": "no-store", "set-cookie": sessionCookie(token) } });
 }

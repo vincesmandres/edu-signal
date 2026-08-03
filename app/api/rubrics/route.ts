@@ -2,6 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { getChatGPTUser } from "../../chatgpt-auth";
 import { getDb } from "../../../db";
 import { classrooms, rubricCriteria, rubrics } from "../../../db/schema";
+import { recordAudit } from "../../audit";
 
 function id() { return crypto.randomUUID(); }
 
@@ -33,5 +34,6 @@ export async function POST(request: Request) {
   await db.insert(rubrics).values({ id: rubricId, classroomId: body.classroomId, title, description: body.description?.trim() || null });
   const criteria = (body.criteria ?? []).filter((criterion) => criterion.name?.trim() && criterion.description?.trim()).map((criterion, position) => ({ id: id(), rubricId, name: criterion.name!.trim(), description: criterion.description!.trim(), maxScore: criterion.maxScore?.trim() || "4", position: String(position) }));
   if (criteria.length) await db.insert(rubricCriteria).values(criteria);
+  await recordAudit({ actorId: user.userId, action: "rubric.created", entityType: "rubric", entityId: rubricId, metadata: { classroomId: body.classroomId, criteriaCount: criteria.length } });
   return Response.json({ rubric: { id: rubricId, title, classroomId: body.classroomId, criteria } }, { status: 201 });
 }

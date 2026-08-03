@@ -2,6 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { getChatGPTUser } from "../../chatgpt-auth";
 import { getDb } from "../../../db";
 import { classrooms, educators, enrollments, students } from "../../../db/schema";
+import { recordAudit } from "../../audit";
 
 function id() { return crypto.randomUUID(); }
 
@@ -34,5 +35,6 @@ export async function POST(request: Request) {
   const studentId = id();
   await db.insert(students).values({ id: studentId, displayName, email: body.email?.trim() || null, externalRef: body.externalRef?.trim() || null });
   if (body.classroomId) await db.insert(enrollments).values({ id: id(), studentId, classroomId: body.classroomId });
+  await recordAudit({ actorId: user.userId, action: "student.created", entityType: "student", entityId: studentId, metadata: { classroomId: body.classroomId ?? null } });
   return Response.json({ student: { id: studentId, displayName, email: body.email?.trim() || null, classroomId: body.classroomId ?? null } }, { status: 201 });
 }
