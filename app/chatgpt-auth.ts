@@ -29,6 +29,8 @@ export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
   const requestHeaders = await headers();
   const userId = requestHeaders.get(USER_ID_HEADER);
   const email = requestHeaders.get(USER_EMAIL_HEADER);
+  // Temporary public-demo fallback. Replace with a real public auth provider
+  // before accepting real student or educator data in production.
   if (!userId || !email) return DEMO_USER;
 
   const encodedFullName = requestHeaders.get(USER_FULL_NAME_HEADER);
