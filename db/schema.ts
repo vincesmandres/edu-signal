@@ -119,6 +119,28 @@ export const evaluations = sqliteTable("evaluations", {
   ...timestamps,
 }, (table) => [index("idx_evaluations_evidence_created").on(table.evidenceId, table.createdAt)]);
 
+export const evaluationScores = sqliteTable("evaluation_scores", {
+  id: text("id").primaryKey(),
+  evaluationId: text("evaluation_id").notNull().references(() => evaluations.id),
+  criterionId: text("criterion_id").notNull().references(() => rubricCriteria.id),
+  score: text("score").notNull(),
+  feedback: text("feedback"),
+  ...timestamps,
+}, (table) => [index("idx_evaluation_scores_evaluation").on(table.evaluationId)]);
+
+export const credentials = sqliteTable("credentials", {
+  id: text("id").primaryKey(),
+  studentId: text("student_id").notNull().references(() => students.id),
+  issuerId: text("issuer_id").notNull().references(() => educators.id),
+  title: text("title").notNull(),
+  achievement: text("achievement").notNull(),
+  verificationCode: text("verification_code").notNull().unique(),
+  credentialJson: text("credential_json").notNull(),
+  status: text("status").notNull().default("issued"),
+  issuedAt: text("issued_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  ...timestamps,
+}, (table) => [index("idx_credentials_student_issued").on(table.studentId, table.issuedAt)]);
+
 export const auditEvents = sqliteTable("audit_events", {
   id: text("id").primaryKey(),
   actorId: text("actor_id").notNull(),
