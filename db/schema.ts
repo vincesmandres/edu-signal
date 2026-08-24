@@ -35,7 +35,7 @@ export const classrooms = pgTable("classrooms", {
   name: text("name").notNull(),
   subject: text("subject").notNull(),
   academicPeriod: text("academic_period").notNull(),
-  teacherId: text("teacher_id").notNull().references(() => educators.id),
+  teacherId: uuid("teacher_id").notNull().references(() => profiles.id),
   status: text("status").notNull().default("active"),
   ...timestamps,
 }, (table) => [index("idx_classrooms_teacher_created").on(table.teacherId, table.createdAt)]);
@@ -61,6 +61,7 @@ export const assessments = pgTable("assessments", {
 
 export const students = pgTable("students", {
   id: text("id").primaryKey(),
+  profileId: uuid("profile_id").unique().references(() => profiles.id),
   displayName: text("display_name").notNull(),
   email: text("email"),
   externalRef: text("external_ref"),
@@ -119,7 +120,7 @@ export const evaluations = pgTable("evaluations", {
   id: text("id").primaryKey(),
   evidenceId: text("evidence_id").notNull().references(() => evidences.id),
   rubricId: text("rubric_id").references(() => rubrics.id),
-  teacherId: text("teacher_id").notNull().references(() => educators.id),
+  teacherId: uuid("teacher_id").notNull().references(() => profiles.id),
   score: text("score"),
   feedback: text("feedback"),
   status: text("status").notNull().default("draft"),
@@ -138,7 +139,7 @@ export const evaluationScores = pgTable("evaluation_scores", {
 export const credentials = pgTable("credentials", {
   id: text("id").primaryKey(),
   studentId: text("student_id").notNull().references(() => students.id),
-  issuerId: text("issuer_id").notNull().references(() => educators.id),
+  issuerId: uuid("issuer_id").notNull().references(() => profiles.id),
   title: text("title").notNull(),
   achievement: text("achievement").notNull(),
   verificationCode: text("verification_code").notNull().unique(),

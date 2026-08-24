@@ -1,15 +1,16 @@
 import { and, eq } from "drizzle-orm";
-import { env } from "cloudflare:workers";
-import { getChatGPTUser } from "../../../chatgpt-auth";
+import { getApiProfile } from "../../../../lib/auth";
 import { getDb } from "../../../../db";
-import { classrooms, educators, evidences, enrollments } from "../../../../db/schema";
+import { classrooms, evidences, enrollments } from "../../../../db/schema";
+import { uploadEvidenceFile } from "../../../../lib/storage/evidence-storage";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp", "text/plain"]);
 
 export async function POST(request: Request) {
-  const user = await getChatGPTUser();
-  if (!user) return Response.json({ error: "Unauthenticated" }, { status: 401 });
+  const auth = await getApiProfile("teacher");
+  if (!auth.profile) return Response.json({ error: auth.status === 401 ? "Unauthenticated" : "Forbidden" }, { status: auth.status });
+  const user = auth.profile;
   const form = await request.formData();
   const file = form.get("file");
   const title = String(form.get("title") ?? "").trim();
@@ -20,15 +21,11 @@ export async function POST(request: Request) {
   if (!ALLOWED_TYPES.has(file.type)) return Response.json({ error: "Tipo de archivo no permitido." }, { status: 415 });
 
   const db = getDb();
-  const allowed = await db.select({ studentId: enrollments.studentId }).from(enrollments).innerJoin(classrooms, eq(classrooms.id, enrollments.classroomId)).where(and(eq(enrollments.studentId, studentId), eq(enrollments.classroomId, classroomId), eq(classrooms.teacherId, user.userId))).limit(1);
+  const allowed = await db.select({ studentId: enrollments.studentId }).from(enrollments).innerJoin(classrooms, eq(classrooms.id, enrollments.classroomId)).where(and(eq(enrollments.studentId, studentId), eq(enrollments.classroomId, classroomId), eq(classrooms.teacherId, user.id))).limit(1);
   if (!allowed.length) return Response.json({ error: "El estudiante no está matriculado en un aula del docente actual." }, { status: 403 });
-  if (!env.EVIDENCE_BUCKET) return Response.json({ error: "El almacenamiento de evidencias no está configurado." }, { status: 503 });
-
   const evidenceId = crypto.randomUUID();
-  const extension = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")).toLowerCase() : "";
-  const storageKey = `evidence/${classroomId}/${studentId}/${evidenceId}${extension}`;
-  await env.EVIDENCE_BUCKET.put(storageKey, file.stream(), { httpMetadata: { contentType: file.type } });
-  await db.insert(educators).values({ id: user.userId, email: user.email, displayName: user.displayName }).onConflictDoNothing();
+  const storageKey = `${classroomId}/${studentId}/${evidenceId}/${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+  await uploadEvidenceFile({ path: storageKey, file, contentType: file.type });
   await db.insert(evidences).values({ id: evidenceId, title, studentId, classroomId, kind: "file", storageKey });
   return Response.json({ evidence: { id: evidenceId, title, storageKey, size: file.size, contentType: file.type } }, { status: 201, headers: { "cache-control": "no-store" } });
 }

@@ -1,25 +1,23 @@
 import { closeDb, getDb } from "../db";
-import { classrooms, educators, enrollments, learningModules, students } from "../db/schema";
+import { classrooms, enrollments, learningModules, students } from "../db/schema";
 
 const ids = {
-  educator: "00000000-0000-4000-8000-000000000001",
   student: "00000000-0000-4000-8000-000000000002",
   classroom: "00000000-0000-4000-8000-000000000003",
   enrollment: "00000000-0000-4000-8000-000000000004",
   module: "00000000-0000-4000-8000-000000000005",
 };
 
+const teacherId = process.env.SEED_TEACHER_ID ?? "";
+const studentProfileId = process.env.SEED_STUDENT_PROFILE_ID;
+if (!teacherId) throw new Error("SEED_TEACHER_ID is required and must be a Supabase Auth user UUID.");
+
 async function seed() {
   const db = getDb();
   await db.transaction(async (tx) => {
-    await tx.insert(educators).values({
-      id: ids.educator,
-      email: "teacher.demo@edu-signal.local",
-      displayName: "Teacher Demo",
-      role: "teacher",
-    }).onConflictDoNothing();
     await tx.insert(students).values({
       id: ids.student,
+      profileId: studentProfileId ?? null,
       displayName: "Student Demo",
       email: "student.demo@edu-signal.local",
     }).onConflictDoNothing();
@@ -28,7 +26,7 @@ async function seed() {
       name: "Física Demo",
       subject: "Física",
       academicPeriod: "2026",
-      teacherId: ids.educator,
+      teacherId,
     }).onConflictDoNothing();
     await tx.insert(enrollments).values({
       id: ids.enrollment,

@@ -1,19 +1,31 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "../../../../db";
-import { educators, sessions } from "../../../../db/schema";
-import { createSessionToken, sessionCookie, sha256, SESSION_DAYS, verifyPassword } from "../../../chatgpt-auth";
+import { profiles } from "../../../../db/schema";
+import { createClient } from "../../../../lib/supabase/server";
 import { recordAudit } from "../../../audit";
 
 export async function POST(request: Request) {
-  const body = await request.json() as { email?: string; password?: string };
-  const email = body.email?.trim().toLowerCase();
-  if (!email || !body.password) return Response.json({ error: "Correo y contraseña son obligatorios." }, { status: 400 });
-  const db = getDb();
-  const rows = await db.select().from(educators).where(eq(educators.email, email)).limit(1);
-  const educator = rows[0];
-  if (!educator?.passwordHash || !(await verifyPassword(body.password, educator.passwordHash))) return Response.json({ error: "Correo o contraseña incorrectos." }, { status: 401 });
-  const token = createSessionToken();
-  await db.insert(sessions).values({ id: crypto.randomUUID(), educatorId: educator.id, tokenHash: await sha256(token), expiresAt: new Date(Date.now() + SESSION_DAYS * 86400000).toISOString() });
-  await recordAudit({ actorId: educator.id, action: "session.created", entityType: "educator", entityId: educator.id });
-  return new Response(JSON.stringify({ user: { id: educator.id, displayName: educator.displayName, email: educator.email, role: educator.role } }), { headers: { "content-type": "application/json", "cache-control": "no-store", "set-cookie": sessionCookie(token) } });
+  try {
+    const body = await request.json() as { email?: string; password?: string };
+    const email = body.email?.trim().toLowerCase();
+    if (!email || !body.password) return Response.json({ error: "Correo y contraseña son obligatorios." }, { status: 400 });
+
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: body.password });
+    if (error) return Response.json({ error: "Correo o contraseña incorrectos." }, { status: 401 });
+
+    const user = data.user;
+    if (!user) return Response.json({ error: "No se pudo validar la sesión." }, { status: 401 });
+    const profile = (await getDb().select().from(profiles).where(eq(profiles.id, user.id)).limit(1))[0];
+    if (!profile) {
+      await supabase.auth.signOut();
+      return Response.json({ error: "La cuenta no tiene un perfil válido." }, { status: 403 });
+    }
+    await recordAudit({ actorId: user.id, action: "user_signed_in", entityType: "user", entityId: user.id });
+    const redirectTo = profile.role === "student" ? "/student" : profile.role === "teacher" ? "/" : `/${profile.role}`;
+    return Response.json({ user: { id: user.id, displayName: profile.displayName, email: user.email, role: profile.role }, redirectTo }, { headers: { "cache-control": "no-store" } });
+  } catch (error) {
+    console.error("login_failed", error instanceof Error ? error.message : "unknown error");
+    return Response.json({ error: "No se pudo iniciar sesión." }, { status: 500 });
+  }
 }

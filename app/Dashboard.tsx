@@ -9,7 +9,7 @@ const highlights = [
   ["Rúbricas", "Evalúa con criterios claros y compartidos.", "/rubrics", "✓"],
 ];
 
-export default function Dashboard({ user }: { user: { displayName: string; email: string } }) {
+export default function Dashboard({ user }: { user: { displayName: string; email?: string } }) {
   const [toast, setToast] = useState("");
   const initials = user.displayName.split(/\s+/).map((word) => word[0]).join("").slice(0, 2).toUpperCase();
   async function signOut() { await fetch("/api/auth/logout", { method: "POST" }); window.location.href = "/login"; }

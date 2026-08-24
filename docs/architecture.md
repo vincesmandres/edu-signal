@@ -22,18 +22,19 @@ La IA debe sugerir contenidos, criterios y secuencias; la publicación y la cali
 
 ## Ruta de migración a Supabase y Vercel
 
-La aplicación usa App Router, rutas de servidor y Drizzle. M0 deja PostgreSQL
-como fuente de verdad y mantiene el runtime Cloudflare solo como compatibilidad
-temporal. Para desplegar una base nueva:
+La aplicación usa App Router, rutas de servidor y Drizzle. M0.5 establece
+Next.js nativo sobre Vercel y PostgreSQL como fuente de verdad; la configuración
+Cloudflare histórica ya no forma parte del runtime. Para desplegar una base nueva:
 
 1. Configurar `DATABASE_URL` y ejecutar `npm run db:migrate` para la estructura
    generada por Drizzle.
-2. Aplicar `supabase/migrations/` con la CLI de Supabase para RLS y Storage.
+2. Aplicar `supabase/migrations/` con la CLI de Supabase para Auth trigger,
+   perfiles, RLS y Storage.
 3. Ejecutar `npm run db:seed` únicamente en entornos de desarrollo.
 4. Conservar `app/`, el esquema de Drizzle y las rutas HTTP; las entidades y
    relaciones no cambian.
-5. Migrar los encabezados de identidad y sesiones actuales a Supabase Auth,
-   conservando el identificador estable de usuario (M1).
+5. Mantener Supabase Auth como identidad canónica; los headers y sesiones
+   históricos quedaron fuera del runtime activo en M1.
 6. Mantener archivos y evidencias en el bucket privado de Supabase Storage y
    solo sus metadatos en PostgreSQL.
 

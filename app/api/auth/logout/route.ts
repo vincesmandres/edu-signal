@@ -1,10 +1,12 @@
-import { eq } from "drizzle-orm";
-import { getDb } from "../../../../db";
-import { sessions } from "../../../../db/schema";
-import { clearSessionCookie, SESSION_COOKIE, sha256 } from "../../../chatgpt-auth";
+import { getCurrentUser } from "../../../../lib/auth";
+import { createClient } from "../../../../lib/supabase/server";
+import { recordAudit } from "../../../audit";
 
-export async function POST(request: Request) {
-  const cookie = request.headers.get("cookie")?.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${SESSION_COOKIE}=`));
-  if (cookie) await getDb().delete(sessions).where(eq(sessions.tokenHash, await sha256(decodeURIComponent(cookie.slice(SESSION_COOKIE.length + 1)))));
-  return new Response(null, { status: 204, headers: { "cache-control": "no-store", "set-cookie": clearSessionCookie() } });
+export async function POST() {
+  const user = await getCurrentUser();
+  const supabase = await createClient();
+  if (user) await recordAudit({ actorId: user.id, action: "user_signed_out", entityType: "user", entityId: user.id });
+  const { error } = await supabase.auth.signOut();
+  if (error) return Response.json({ error: "No se pudo cerrar la sesión." }, { status: 500 });
+  return new Response(null, { status: 204, headers: { "cache-control": "no-store" } });
 }
