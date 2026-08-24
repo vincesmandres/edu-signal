@@ -80,7 +80,7 @@ export async function verifyPassword(password: string, stored: string): Promise<
   const salt = fromHex(saltText);
   const expected = fromHex(expectedText);
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
-  const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", salt: salt.buffer, iterations: Number(iterationText), hash: "SHA-256" }, key, 256));
+  const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", salt: salt as unknown as BufferSource, iterations: Number(iterationText), hash: "SHA-256" }, key, 256));
   if (bits.length !== expected.length) return false;
   let difference = 0;
   for (let index = 0; index < bits.length; index += 1) difference |= bits[index] ^ expected[index];

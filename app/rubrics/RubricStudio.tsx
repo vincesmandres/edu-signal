@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 type Room = { id: string; name: string };
-type Rubric = { rubric: { id: string; title: string; description: string | null }; criteria: Array<{ id: string; name: string; description: string }> };
+type Rubric = { rubric: { id: string; title: string; description: string | null; status?: string }; criteria: Array<{ id: string; name: string; description: string }> };
 export default function RubricStudio({ teacherName }: { teacherName: string }) {
   const [rooms, setRooms] = useState<Room[]>([]); const [rubrics, setRubrics] = useState<Rubric[]>([]); const [message, setMessage] = useState("");
   useEffect(() => { Promise.all([fetch("/api/classrooms").then((r) => r.json()), fetch("/api/rubrics").then((r) => r.json())]).then(([r, x]) => { setRooms(r.classrooms ?? []); setRubrics(x.rubrics ?? []); }); }, []);

@@ -20,14 +20,21 @@ Un módulo mantiene una pregunta guía y una lista explícita de metodologías. 
 
 La IA debe sugerir contenidos, criterios y secuencias; la publicación y la calificación final seguirán siendo decisiones del docente.
 
-## Ruta de migración a Vercel
+## Ruta de migración a Supabase y Vercel
 
-La aplicación usa App Router, rutas de servidor y Drizzle, todos portables a Vercel. En una migración posterior:
+La aplicación usa App Router, rutas de servidor y Drizzle. M0 deja PostgreSQL
+como fuente de verdad y mantiene el runtime Cloudflare solo como compatibilidad
+temporal. Para desplegar una base nueva:
 
-1. Conservar `app/`, el esquema de Drizzle y las rutas HTTP.
-2. Reemplazar el adaptador D1 de `db/index.ts` por un adaptador PostgreSQL/Neon compatible con Vercel; las entidades y relaciones no cambian.
-3. Sustituir los encabezados de identidad de la plataforma actual por un proveedor de autenticación elegido para producción (por ejemplo, Clerk o Auth.js), conservando el identificador estable de usuario.
-4. Guardar archivos y evidencias en almacenamiento de objetos (Vercel Blob, S3 o R2) y mantener solo sus metadatos en la base de datos.
-5. Definir variables de entorno por entorno y ejecutar las migraciones desde CI antes de desplegar.
+1. Configurar `DATABASE_URL` y ejecutar `npm run db:migrate` para la estructura
+   generada por Drizzle.
+2. Aplicar `supabase/migrations/` con la CLI de Supabase para RLS y Storage.
+3. Ejecutar `npm run db:seed` únicamente en entornos de desarrollo.
+4. Conservar `app/`, el esquema de Drizzle y las rutas HTTP; las entidades y
+   relaciones no cambian.
+5. Migrar los encabezados de identidad y sesiones actuales a Supabase Auth,
+   conservando el identificador estable de usuario (M1).
+6. Mantener archivos y evidencias en el bucket privado de Supabase Storage y
+   solo sus metadatos en PostgreSQL.
 
 No se deben exponer claves de LMS o de modelos de IA al cliente. Todas las solicitudes a proveedores externos deben pasar por rutas de servidor con controles de rol, auditoría y límites de uso.
