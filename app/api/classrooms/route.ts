@@ -11,8 +11,10 @@ export async function GET() {
   if (!auth.profile) return Response.json({ error: auth.status === 401 ? "Unauthenticated" : "Forbidden" }, { status: auth.status });
   const user = auth.profile;
   const db = getDb();
-  const rows = await db.select().from(classrooms).where(eq(classrooms.teacherId, user.id)).orderBy(desc(classrooms.createdAt));
-  return Response.json({ classrooms: rows });
+  const rows = await db.select({ classroom: classrooms, moduleId: learningModules.id }).from(classrooms).leftJoin(learningModules, eq(learningModules.classroomId, classrooms.id)).where(eq(classrooms.teacherId, user.id)).orderBy(desc(classrooms.createdAt));
+  const grouped = new Map<string, typeof rows[number]["classroom"] & { moduleId?: string }>();
+  for (const row of rows) grouped.set(row.classroom.id, { ...row.classroom, moduleId: row.moduleId ?? undefined });
+  return Response.json({ classrooms: [...grouped.values()] });
 }
 
 export async function POST(request: Request) {

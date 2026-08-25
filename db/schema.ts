@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).notNull().default(sql`now()`),
@@ -79,6 +79,51 @@ export const enrollments = pgTable("enrollments", {
 }, (table) => [
   index("idx_enrollments_student").on(table.studentId),
   index("idx_enrollments_classroom").on(table.classroomId),
+  uniqueIndex("uq_enrollments_student_classroom").on(table.studentId, table.classroomId),
+]);
+
+export const learningActivities = pgTable("learning_activities", {
+  id: text("id").primaryKey(),
+  moduleId: text("module_id").notNull().references(() => learningModules.id),
+  title: text("title").notNull(),
+  instructions: text("instructions").notNull().default(""),
+  activityType: text("activity_type").notNull(),
+  position: integer("position").notNull().default(1),
+  required: boolean("required").notNull().default(true),
+  config: jsonb("config").notNull().default({}),
+  status: text("status").notNull().default("draft"),
+  publishedAt: timestamp("published_at", { withTimezone: true, mode: "string" }),
+  ...timestamps,
+}, (table) => [
+  index("idx_activities_module_position").on(table.moduleId, table.position),
+  index("idx_activities_module_status").on(table.moduleId, table.status),
+]);
+
+export const activityResponses = pgTable("activity_responses", {
+  id: text("id").primaryKey(),
+  studentId: text("student_id").notNull().references(() => students.id),
+  activityId: text("activity_id").notNull().references(() => learningActivities.id),
+  response: text("response").notNull(),
+  status: text("status").notNull().default("draft"),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("uq_activity_responses_student_activity").on(table.studentId, table.activityId),
+  index("idx_activity_responses_student").on(table.studentId),
+  index("idx_activity_responses_activity").on(table.activityId),
+]);
+
+export const studentActivityProgress = pgTable("student_activity_progress", {
+  id: text("id").primaryKey(),
+  studentId: text("student_id").notNull().references(() => students.id),
+  activityId: text("activity_id").notNull().references(() => learningActivities.id),
+  status: text("status").notNull().default("not_started"),
+  startedAt: timestamp("started_at", { withTimezone: true, mode: "string" }),
+  completedAt: timestamp("completed_at", { withTimezone: true, mode: "string" }),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("uq_activity_progress_student_activity").on(table.studentId, table.activityId),
+  index("idx_activity_progress_student").on(table.studentId),
+  index("idx_activity_progress_activity").on(table.activityId),
 ]);
 
 export const rubrics = pgTable("rubrics", {

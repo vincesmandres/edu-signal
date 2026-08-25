@@ -27,12 +27,12 @@ test("M1 profile trigger and role guard are present", async () => {
 });
 
 test("teacher and student routes use server-side role guards", async () => {
-  const [home, student, rubrics] = await Promise.all([
+  const [home, studentLayout, rubrics] = await Promise.all([
     text("app/page.tsx"),
-    text("app/student/page.tsx"),
+    text("app/student/layout.tsx"),
     text("app/rubrics/page.tsx"),
   ]);
   assert.match(home, /requireRole/);
-  assert.match(student, /requireRole\("student"/);
+  assert.match(studentLayout, /requireStudent/);
   assert.match(rubrics, /requireRole\("teacher"/);
 });

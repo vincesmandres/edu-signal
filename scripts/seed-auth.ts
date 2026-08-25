@@ -18,8 +18,11 @@ async function createDemoUser(email: string, password: string, displayName: stri
     const { error: profileError } = await supabase.from("profiles").update({ role }).eq("id", data.user.id);
     if (profileError) throw new Error(`Could not assign teacher role: ${profileError.message}`);
   }
+  return data.user.id;
 }
 
-await createDemoUser("teacher.demo@example.test", teacherPassword, "Teacher Demo", "teacher");
-await createDemoUser("student.demo@example.test", studentPassword, "Student Demo", "student");
-console.log("Supabase demo users created.");
+const teacherId = await createDemoUser("teacher.demo@example.test", teacherPassword, "Teacher Demo", "teacher");
+const studentDemoId = await createDemoUser("student.demo@example.test", studentPassword, "Student Demo", "student");
+const studentAId = await createDemoUser("student.a@example.test", studentPassword, "Student A", "student");
+const studentBId = await createDemoUser("student.b@example.test", studentPassword, "Student B", "student");
+console.log(`Supabase demo users created. Student Demo=${studentDemoId} SEED_TEACHER_ID=${teacherId} SEED_STUDENT_A_PROFILE_ID=${studentAId} SEED_STUDENT_B_PROFILE_ID=${studentBId}`);

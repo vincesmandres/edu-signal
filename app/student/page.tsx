@@ -1,8 +1,11 @@
-import { requireRole } from "../../lib/auth";
-
-export const dynamic = "force-dynamic";
+import Link from "next/link";
+import { getStudentDashboard } from "../../lib/student/get-student-dashboard";
+import { parseMethodologies } from "../../lib/student/get-student-module";
 
 export default async function StudentPage() {
-  const profile = await requireRole("student", "/student");
-  return <main className="auth-shell"><div className="auth-card"><small>EDU SIGNAL</small><h1>Hola, {profile.displayName}.</h1><p>Tu espacio de aprendizaje está listo.</p><div className="workspace-list"><h2>Mis aulas</h2><p>Próximamente</p></div></div></main>;
+  const { profile, classrooms, modules } = await getStudentDashboard();
+  const next = modules[0];
+  const moduleCount = modules.length;
+  const nextActivity = next?.nextActivity;
+  return <main className="student-main"><header className="student-welcome"><p className="student-kicker">TU ESPACIO DE APRENDIZAJE</p><h1>Buenos días, {profile.displayName}.</h1><p>Tu aprendizaje deja señal. Continúa a tu propio ritmo.</p></header><section className="student-content"><section className="student-section student-continue" aria-labelledby="continue-title"><div className="section-heading"><div><small>CONTINUAR</small><h2 id="continue-title">Tu siguiente paso</h2></div></div>{next ? <article className="student-next"><div><span className="student-label">{nextActivity ? "SIGUIENTE ACTIVIDAD" : "MÓDULO DISPONIBLE"}</span><h3>{nextActivity?.title ?? next.module.title}</h3><p>{next.classroom.name} · {next.classroom.subject}</p><div className="method-tags">{parseMethodologies(next.module.methodologies).map((method) => <span key={method}>{method}</span>)}</div></div><Link className="primary" href={nextActivity ? `/student/modules/${next.module.id}/activities/${nextActivity.id}` : `/student/modules/${next.module.id}`}>Continuar <span>→</span></Link></article> : <div className="student-empty"><h3>Todavía no tienes módulos disponibles.</h3><p>Cuando tu docente publique uno, aparecerá aquí.</p></div>}</section><section className="student-section" aria-labelledby="classrooms-title"><div className="section-heading"><div><small>MIS AULAS</small><h2 id="classrooms-title">Donde estás aprendiendo</h2></div><Link className="section-link" href="/student/classrooms">Ver todas →</Link></div>{classrooms.length ? <div className="student-classroom-grid">{classrooms.map((classroom) => <Link className="student-classroom-card" href={`/student/classrooms/${classroom.id}`} key={classroom.id}><span className="student-label">{classroom.academicPeriod}</span><h3>{classroom.name}</h3><p>{classroom.subject}</p><strong>{classroom.modules.length} {classroom.modules.length === 1 ? "módulo disponible" : "módulos disponibles"}</strong><span className="card-arrow">→</span></Link>)}</div> : <div className="student-empty"><h3>Todavía no tienes aulas.</h3><p>Cuando tu docente te matricule, aparecerán aquí.</p></div>}</section><section className="student-summary" aria-label="Resumen de aprendizaje"><div><strong>{classrooms.length}</strong><span>Aulas activas</span></div><div><strong>{moduleCount}</strong><span>Módulos disponibles</span></div></section></section></main>;
 }
