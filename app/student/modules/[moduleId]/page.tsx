@@ -1,0 +1,11 @@
+import Link from "next/link";
+import { getStudentActivities } from "../../../../lib/student/get-student-activities";
+import { parseMethodologies } from "../../../../lib/student/get-student-module";
+
+export default async function StudentModulePage({ params }: { params: Promise<{ moduleId: string }> }) {
+  const { moduleId } = await params;
+  const { module, classroom, teacherName, activities } = await getStudentActivities(moduleId);
+  const required = activities.filter(({ activity }) => activity.required);
+  const completed = required.filter(({ progress }) => progress?.status === "completed").length;
+  return <main className="student-main student-subpage"><header className="student-module-header"><Link className="back-link" href={`/student/classrooms/${classroom.id}`}>← {classroom.name}</Link><span className="student-label">MÓDULO DISPONIBLE</span><h1>{module.title}</h1><p>{module.drivingQuestion}</p><span>{classroom.subject} · {classroom.academicPeriod} · Docente {teacherName}</span></header><section className="student-content student-preview"><div><small>METODOLOGÍAS</small><div className="method-tags method-tags-large">{parseMethodologies(module.methodologies).map((method) => <span key={method}>{method}</span>)}</div></div>{activities.length ? <div><div className="section-heading"><div><small>ACTIVIDADES</small><h2>Tu recorrido</h2></div><span className="student-count">{completed}/{required.length}</span></div><div className="student-activity-list">{activities.map(({ activity, progress }, index) => <Link className="student-activity-card" href={`/student/modules/${module.id}/activities/${activity.id}`} key={activity.id}><span className="module-number">{String(index + 1).padStart(2, "0")}</span><div><span className="student-label">{progress?.status === "completed" ? "COMPLETADA" : activity.activityType.toUpperCase()}</span><h3>{activity.title}</h3><p>{activity.instructions || "Continúa con esta actividad."}</p></div><span className="card-arrow">{progress?.status === "completed" ? "✓" : "→"}</span></Link>)}</div></div> : <div className="student-preview-note"><h2>Todavía no hay actividades disponibles.</h2><p>Las actividades de este módulo estarán disponibles próximamente.</p></div>}</section></main>;
+}
