@@ -1,5 +1,8 @@
+import nextEnv from "@next/env";
 import { closeDb, getDb } from "../db";
 import { classrooms, enrollments, learningActivities, learningModules, students } from "../db/schema";
+
+nextEnv.loadEnvConfig(process.cwd());
 
 const teacherId = process.env.SEED_TEACHER_ID ?? "";
 const studentAId = process.env.SEED_STUDENT_A_PROFILE_ID;

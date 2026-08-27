@@ -1,5 +1,8 @@
+import nextEnv from "@next/env";
 import { closeDb, getDb } from "../db";
 import { classrooms, enrollments, learningModules, students } from "../db/schema";
+
+nextEnv.loadEnvConfig(process.cwd());
 
 const ids = {
   student: "00000000-0000-4000-8000-000000000002",

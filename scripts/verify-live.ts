@@ -1,4 +1,7 @@
+import nextEnv from "@next/env";
 import { createClient } from "@supabase/supabase-js";
+
+nextEnv.loadEnvConfig(process.cwd());
 
 const env = (name: string) => process.env[name] ?? "";
 const required = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "M4_STUDENT_A_EMAIL", "M4_STUDENT_A_PASSWORD", "M4_STUDENT_B_EMAIL", "M4_STUDENT_B_PASSWORD", "M4_TEACHER_EMAIL", "M4_TEACHER_PASSWORD", "M4_APP_URL"];
