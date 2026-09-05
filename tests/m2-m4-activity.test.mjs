@@ -30,6 +30,17 @@ test("student activity routes derive identity and enforce published access", asy
   assert.match(complete, /completed/);
 });
 
+test("saving a response returns success and the completion action follows it", async () => {
+  const [response, renderer] = await Promise.all([
+    text("app/api/student/activities/[activityId]/response/route.ts"),
+    text("components/activities/ActivityRenderer.tsx"),
+  ]);
+  assert.match(response, /success: true/);
+  assert.match(renderer, /data\.success !== true/);
+  assert.match(renderer, /const saved = await saveResponse\(\); if \(saved\) await complete\(\)/);
+  assert.match(renderer, /activity\.requiresEvidence/);
+});
+
 test("activity config validation rejects unsafe resources", async () => {
   const source = await text("lib/activities.ts");
   assert.match(source, /ACTIVITY_TYPES/);

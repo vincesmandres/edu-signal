@@ -9,9 +9,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs tests/m1-identity.test.mjs tests/m2-m4-activity.test.mjs",
+    "test": "npm run build && node --test tests/rendered-html.test.mjs tests/m1-identity.test.mjs tests/m2-m4-activity.test.mjs tests/m5-evidence.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate",
+    "db:generate": "node scripts/db-generate.mjs",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:m4": "tsx scripts/seed-m4.ts",
@@ -19,7 +19,7 @@
     "auth:seed": "tsx scripts/seed-auth.ts",
     "test:m1": "node --test tests/m1-identity.test.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run typecheck && npm run lint && node --test tests/rendered-html.test.mjs tests/m1-identity.test.mjs tests/m2-m4-activity.test.mjs && npm run build"
+    "verify": "npm run typecheck && npm run lint && node --test tests/rendered-html.test.mjs tests/m1-identity.test.mjs tests/m2-m4-activity.test.mjs tests/m5-evidence.test.mjs && npm run build"
   },
   "dependencies": {
     "@supabase/ssr": "0.7.0",

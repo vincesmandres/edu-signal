@@ -14,7 +14,7 @@ export async function POST(request: Request, context: { params: Promise<{ activi
   if (!response) return Response.json({ error: "La respuesta no puede estar vacía." }, { status: 400 });
   const saved = (await getDb().insert(activityResponses).values({ id: crypto.randomUUID(), studentId: student.id, activityId, response, status: "draft" }).onConflictDoUpdate({ target: [activityResponses.studentId, activityResponses.activityId], set: { response, updatedAt: new Date().toISOString() } }).returning())[0];
   await recordAudit({ actorId: student.profileId ?? student.id, action: "activity.response_saved", entityType: "activity_response", entityId: saved.id, metadata: { activityId } });
-  return Response.json({ response: saved });
+  return Response.json({ success: true, response: saved });
 }
 
 async function accessibleActivity(activityId: string, studentId: string) {

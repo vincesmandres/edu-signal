@@ -1,10 +1,7 @@
 import { and, desc, eq } from "drizzle-orm";
 import { getApiProfile } from "../../../lib/auth";
 import { getDb } from "../../../db";
-import { classrooms, evidences, enrollments, students } from "../../../db/schema";
-import { recordAudit } from "../../audit";
-
-function id() { return crypto.randomUUID(); }
+import { classrooms, evidences, students } from "../../../db/schema";
 
 export async function GET(request: Request) {
   const auth = await getApiProfile("teacher");
@@ -16,23 +13,13 @@ export async function GET(request: Request) {
     .from(evidences)
     .innerJoin(students, eq(students.id, evidences.studentId))
     .innerJoin(classrooms, eq(classrooms.id, evidences.classroomId))
-    .where(classroomId ? and(eq(classrooms.teacherId, user.id), eq(evidences.classroomId, classroomId)) : eq(classrooms.teacherId, user.id))
+    .where(classroomId ? and(eq(classrooms.teacherId, user.id), eq(evidences.classroomId, classroomId), eq(evidences.status, "submitted")) : and(eq(classrooms.teacherId, user.id), eq(evidences.status, "submitted")))
     .orderBy(desc(evidences.createdAt));
   return Response.json({ evidences: rows.map(({ evidence, student }) => ({ ...evidence, studentName: student.displayName })) });
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   const auth = await getApiProfile("teacher");
   if (!auth.profile) return Response.json({ error: auth.status === 401 ? "Unauthenticated" : "Forbidden" }, { status: auth.status });
-  const user = auth.profile;
-  const body = await request.json() as { title?: string; description?: string; kind?: string; studentId?: string; classroomId?: string; storageKey?: string };
-  const title = body.title?.trim();
-  if (!title || !body.studentId || !body.classroomId) return Response.json({ error: "Título, estudiante y aula son obligatorios." }, { status: 400 });
-  const db = getDb();
-  const allowed = await db.select({ studentId: enrollments.studentId }).from(enrollments).innerJoin(classrooms, eq(classrooms.id, enrollments.classroomId)).where(and(eq(enrollments.studentId, body.studentId), eq(enrollments.classroomId, body.classroomId), eq(classrooms.teacherId, user.id))).limit(1);
-  if (!allowed.length) return Response.json({ error: "El estudiante no está matriculado en un aula del docente actual." }, { status: 403 });
-  const evidenceId = id();
-  await db.insert(evidences).values({ id: evidenceId, title, description: body.description?.trim() || null, kind: body.kind?.trim() || "project", studentId: body.studentId, classroomId: body.classroomId, storageKey: body.storageKey?.trim() || null });
-  await recordAudit({ actorId: user.id, action: "evidence.created", entityType: "evidence", entityId: evidenceId, metadata: { studentId: body.studentId, classroomId: body.classroomId } });
-  return Response.json({ evidence: { id: evidenceId, title, studentId: body.studentId, classroomId: body.classroomId } }, { status: 201 });
+  return Response.json({ error: "La creación docente de evidencias es una ruta histórica de solo lectura." }, { status: 410 });
 }

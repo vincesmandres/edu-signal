@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "../../../../../../db";
-import { activityResponses, classrooms, enrollments, learningActivities, learningModules, studentActivityProgress, students } from "../../../../../../db/schema";
+import { activityResponses, classrooms, enrollments, evidences, learningActivities, learningModules, studentActivityProgress, students } from "../../../../../../db/schema";
 import { requiresResponse } from "../../../../../../lib/activities";
 import { requireStudent } from "../../../../../../lib/student/require-student";
 import { recordAudit } from "../../../../../../app/audit";
@@ -16,6 +16,10 @@ export async function POST(_request: Request, context: { params: Promise<{ activ
   if (requiresResponse(activity.activityType)) {
     const response = (await getDb().select({ id: activityResponses.id }).from(activityResponses).where(and(eq(activityResponses.activityId, activityId), eq(activityResponses.studentId, student.id))).limit(1))[0];
     if (!response) return Response.json({ error: "Guarda una respuesta antes de completar esta actividad." }, { status: 400 });
+  }
+  if (activity.requiresEvidence) {
+    const evidence = (await getDb().select({ id: evidences.id }).from(evidences).where(and(eq(evidences.activityId, activityId), eq(evidences.studentId, student.id), eq(evidences.status, "submitted"))).limit(1))[0];
+    if (!evidence) return Response.json({ error: "Envía una evidencia antes de completar esta actividad." }, { status: 400 });
   }
   const progress = (await getDb().insert(studentActivityProgress).values({ id: crypto.randomUUID(), studentId: student.id, activityId, status: "completed", startedAt: new Date().toISOString(), completedAt: new Date().toISOString() }).onConflictDoUpdate({ target: [studentActivityProgress.studentId, studentActivityProgress.activityId], set: { status: "completed", completedAt: new Date().toISOString() } }).returning())[0];
   await recordAudit({ actorId: student.profileId ?? student.id, action: "activity.completed", entityType: "activity_progress", entityId: progress.id, metadata: { activityId } });
