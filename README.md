@@ -90,7 +90,7 @@ Esta estructura es una propuesta inicial y puede ajustarse cuando se defina el s
 
 ## Estado Actual
 
-El proyecto cuenta con autenticación, un espacio docente inicial y persistencia para aulas, módulos y evaluaciones. Consulta [la arquitectura inicial](docs/architecture.md) para el modelo pedagógico y la ruta de migración futura a Vercel.
+El proyecto cuenta con autenticación, un espacio docente inicial y persistencia para aulas, módulos y evaluaciones. Consulta [la arquitectura](docs/architecture.md) y [el procedimiento de despliegue en Cloudflare](docs/cloudflare-deployment.md) para el modelo y la operación actuales.
 
 ## Como Contribuir
 

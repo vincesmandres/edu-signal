@@ -8,9 +8,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:deploy:dry": "wrangler deploy --config wrangler.jsonc --dry-run",
+    "cf:deploy": "wrangler deploy --config wrangler.jsonc",
     "start": "next start",
     "test": "npm run build && node --test tests/rendered-html.test.mjs tests/m1-identity.test.mjs tests/m2-m4-activity.test.mjs tests/m5-evidence.test.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern .open-next --ignore-pattern .kilo",
     "db:generate": "node scripts/db-generate.mjs",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx scripts/seed.ts",
@@ -24,9 +27,10 @@
   "dependencies": {
     "@supabase/ssr": "0.7.0",
     "@supabase/supabase-js": "2.57.0",
+    "@opennextjs/cloudflare": "1.20.6",
     "drizzle-orm": "0.45.2",
-    "next": "16.2.6",
-    "pg": "8.16.3",
+    "next": "16.3.3",
+    "postgres": "3.4.7",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "react-loading-skeleton": "3.5.0"
@@ -34,15 +38,15 @@
   "devDependencies": {
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",
-    "@types/pg": "^8.23.1",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "drizzle-kit": "0.31.10",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.3.3",
     "tailwindcss": "4.2.1",
     "tsx": "4.20.5",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "wrangler": "4.129.0"
   },
   "type": "module"
 }

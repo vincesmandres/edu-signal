@@ -4,7 +4,7 @@ import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 
-test("native Next build produces the Vercel output", async () => {
+test("native Next build produces the standard Next output", async () => {
   await access(new URL(".next", root));
   const packageJson = await readFile(new URL("package.json", root), "utf8");
   assert.match(packageJson, /"build":\s*"next build"/);

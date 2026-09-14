@@ -32,12 +32,13 @@ yarn-error.log*
 .env*
 !.env.example
 
-# vercel
+# provider-local metadata
 .vercel
 
 # typescript
 next-env.d.ts
 /dist/
+/.open-next/
 /.wrangler/
 /outputs/
 /work/

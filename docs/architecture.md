@@ -20,11 +20,13 @@ Un módulo mantiene una pregunta guía y una lista explícita de metodologías. 
 
 La IA debe sugerir contenidos, criterios y secuencias; la publicación y la calificación final seguirán siendo decisiones del docente.
 
-## Ruta de migración a Supabase y Vercel
+## Ruta de despliegue a Supabase y Cloudflare
 
-La aplicación usa App Router, rutas de servidor y Drizzle. M0.5 establece
-Next.js nativo sobre Vercel y PostgreSQL como fuente de verdad; la configuración
-Cloudflare histórica ya no forma parte del runtime. Para desplegar una base nueva:
+La aplicación usa App Router, rutas de servidor y Drizzle. OpenNext despliega el
+Next.js actual como Worker de Cloudflare y PostgreSQL sigue siendo la fuente de
+verdad. `db/index.ts` es la frontera de runtime: en desarrollo Node.js usa
+`DATABASE_URL`; en Cloudflare usa la conexión de `HYPERDRIVE` con el driver
+`postgres-js`, por lo que el Worker no importa `pg`/node-postgres.
 
 1. Configurar `DATABASE_URL` y ejecutar `npm run db:migrate` para la estructura
    generada por Drizzle.
@@ -37,5 +39,8 @@ Cloudflare histórica ya no forma parte del runtime. Para desplegar una base nue
    históricos quedaron fuera del runtime activo en M1.
 6. Mantener archivos y evidencias en el bucket privado de Supabase Storage y
    solo sus metadatos en PostgreSQL.
+
+El procedimiento reproducible de Cloudflare, incluyendo secretos y el binding
+Hyperdrive requerido, está en [docs/cloudflare-deployment.md](cloudflare-deployment.md).
 
 No se deben exponer claves de LMS o de modelos de IA al cliente. Todas las solicitudes a proveedores externos deben pasar por rutas de servidor con controles de rol, auditoría y límites de uso.
