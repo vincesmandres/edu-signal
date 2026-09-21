@@ -11,6 +11,7 @@ export function validateEvaluationScores(scores: EvaluationScoreInput[], criteri
   const expected = new Map(criteria.map((criterion) => [criterion.id, parseScore(criterion.maxScore)]));
   const seen = new Set<string>();
   for (const item of scores) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return "Cada criterio debe ser un objeto válido.";
     if (typeof item.criterionId !== "string" || !item.criterionId.trim() || seen.has(item.criterionId)) return "Los criterios son inválidos o están duplicados.";
     const max = expected.get(item.criterionId);
     const score = parseScore(item.score);

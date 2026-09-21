@@ -3,6 +3,11 @@ import { getApiProfile } from "../../../lib/auth";
 import { getDb } from "../../../db";
 import { auditEvents, classrooms, evidences, evaluationScores, evaluations, rubricCriteria, rubrics } from "../../../db/schema";
 import { validateEvaluationScores, validateGlobalScore } from "../../../lib/evaluation-validation";
+import { requireOwnedRubric } from "../../../lib/authorization";
+
+class EvaluationAuthorizationError extends Error {
+  constructor(public readonly status: 403 | 404 | 422, message: string) { super(message); }
+}
 
 export async function GET(request: Request) {
   const auth = await getApiProfile("teacher");
@@ -33,12 +38,13 @@ export async function POST(request: Request) {
   const rubricId = typeof body.rubricId === "string" && body.rubricId ? body.rubricId : null;
   if (body.scores !== undefined && !Array.isArray(body.scores)) return Response.json({ error: "Los criterios deben ser una lista." }, { status: 400 });
   const scores = body.scores ?? [];
+  if (scores.some((item) => !item || typeof item !== "object" || Array.isArray(item))) return Response.json({ error: "Cada criterio debe ser un objeto." }, { status: 400 });
   const globalError = validateGlobalScore(body.score);
   if (globalError) return Response.json({ error: globalError }, { status: 422 });
   let criteria: Array<typeof rubricCriteria.$inferSelect> = [];
   if (rubricId) {
-    const rubric = (await db.select({ rubric: rubrics }).from(rubrics).where(and(eq(rubrics.id, rubricId), eq(rubrics.classroomId, evidence.classroom.id))).limit(1))[0];
-    if (!rubric) return Response.json({ error: "La rúbrica no pertenece al aula de la evidencia." }, { status: 403 });
+    const ownedRubric = await requireOwnedRubric(auth.profile.id, rubricId);
+    if (!ownedRubric || ownedRubric.rubric.classroomId !== evidence.classroom.id) return Response.json({ error: "La rúbrica no pertenece al aula de la evidencia." }, { status: 403 });
     criteria = await db.select().from(rubricCriteria).where(eq(rubricCriteria.rubricId, rubricId));
     if (!criteria.length) return Response.json({ error: "La rúbrica seleccionada no tiene criterios evaluables." }, { status: 422 });
     const scoreError = validateEvaluationScores(scores, criteria);
@@ -48,11 +54,24 @@ export async function POST(request: Request) {
   const evaluationId = crypto.randomUUID();
   try {
     await db.transaction(async (tx) => {
+      const currentEvidence = (await tx.select({ evidence: evidences, classroom: classrooms }).from(evidences).innerJoin(classrooms, eq(classrooms.id, evidences.classroomId)).where(and(eq(evidences.id, body.evidenceId as string), eq(classrooms.teacherId, auth.profile!.id))).for("update").limit(1))[0];
+      if (!currentEvidence) throw new EvaluationAuthorizationError(404, "Evidencia no encontrada.");
+      if (currentEvidence.evidence.status !== "submitted") throw new EvaluationAuthorizationError(422, "Sólo se puede evaluar evidencia enviada.");
+      let transactionCriteria: Array<typeof rubricCriteria.$inferSelect> = [];
+      if (rubricId) {
+        const currentRubric = (await tx.select({ rubric: rubrics }).from(rubrics).innerJoin(classrooms, eq(classrooms.id, rubrics.classroomId)).where(and(eq(rubrics.id, rubricId), eq(rubrics.classroomId, currentEvidence.evidence.classroomId), eq(classrooms.teacherId, auth.profile!.id))).for("update").limit(1))[0];
+        if (!currentRubric) throw new EvaluationAuthorizationError(403, "La rúbrica no pertenece al aula de la evidencia.");
+        transactionCriteria = await tx.select().from(rubricCriteria).where(eq(rubricCriteria.rubricId, rubricId));
+        if (!transactionCriteria.length) throw new EvaluationAuthorizationError(422, "La rúbrica seleccionada no tiene criterios evaluables.");
+        const transactionScoreError = validateEvaluationScores(scores, transactionCriteria);
+        if (transactionScoreError) throw new EvaluationAuthorizationError(422, transactionScoreError);
+      }
       await tx.insert(evaluations).values({ id: evaluationId, evidenceId: body.evidenceId as string, rubricId, teacherId: auth.profile!.id, score: body.score == null || body.score === "" ? null : String(body.score), feedback: typeof body.feedback === "string" ? body.feedback.trim() || null : null, status: "published" });
       if (rubricId && scores.length) await tx.insert(evaluationScores).values(scores.map((item) => ({ id: crypto.randomUUID(), evaluationId, criterionId: item.criterionId as string, score: String(item.score), feedback: typeof item.feedback === "string" ? item.feedback.trim() || null : null })));
       await tx.insert(auditEvents).values({ id: crypto.randomUUID(), actorId: auth.profile!.id, action: "evaluation.created", entityType: "evaluation", entityId: evaluationId, metadata: JSON.stringify({ evidenceId: body.evidenceId, rubricId }) });
     });
   } catch (error) {
+    if (error instanceof EvaluationAuthorizationError) return Response.json({ error: error.message }, { status: error.status });
     if (error && typeof error === "object" && "code" in error && (error as { code?: string }).code === "23505") return Response.json({ error: "La evidencia ya tiene una evaluación." }, { status: 409 });
     return Response.json({ error: "No se pudo guardar la evaluación." }, { status: 500 });
   }
