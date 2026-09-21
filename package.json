@@ -12,7 +12,7 @@
     "cf:deploy:dry": "wrangler deploy --config wrangler.jsonc --dry-run",
     "cf:deploy": "wrangler deploy --config wrangler.jsonc",
     "start": "next start",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs tests/m1-identity.test.mjs tests/m2-m4-activity.test.mjs tests/m5-evidence.test.mjs",
+    "test": "npm run build && node --test tests/rendered-html.test.mjs tests/m1-identity.test.mjs tests/m2-m4-activity.test.mjs tests/m5-evidence.test.mjs && tsx --test tests/m6-product-integrity.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern .open-next --ignore-pattern .kilo",
     "db:generate": "node scripts/db-generate.mjs",
     "db:migrate": "drizzle-kit migrate",
@@ -21,8 +21,9 @@
     "verify:live": "tsx scripts/verify-live.ts",
     "auth:seed": "tsx scripts/seed-auth.ts",
     "test:m1": "node --test tests/m1-identity.test.mjs",
+    "test:m6": "tsx --test tests/m6-product-integrity.test.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run typecheck && npm run lint && node --test tests/rendered-html.test.mjs tests/m1-identity.test.mjs tests/m2-m4-activity.test.mjs tests/m5-evidence.test.mjs && npm run build"
+    "verify": "npm run typecheck && npm run lint && node --test tests/rendered-html.test.mjs tests/m1-identity.test.mjs tests/m2-m4-activity.test.mjs tests/m5-evidence.test.mjs && tsx --test tests/m6-product-integrity.test.mjs && npm run build"
   },
   "dependencies": {
     "@supabase/ssr": "0.7.0",
