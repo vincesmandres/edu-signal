@@ -182,7 +182,7 @@ export const evaluations = pgTable("evaluations", {
   feedback: text("feedback"),
   status: text("status").notNull().default("draft"),
   ...timestamps,
-}, (table) => [index("idx_evaluations_evidence_created").on(table.evidenceId, table.createdAt)]);
+}, (table) => [index("idx_evaluations_evidence_created").on(table.evidenceId, table.createdAt), uniqueIndex("uq_evaluations_evidence").on(table.evidenceId)]);
 
 export const evaluationScores = pgTable("evaluation_scores", {
   id: text("id").primaryKey(),
