@@ -24,10 +24,19 @@ export default function ClassroomStudio({ teacherName, aiEnabled }: { teacherNam
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
     const payload = Object.fromEntries(form.entries()) as Record<string, string>;
-    const response = await fetch("/api/classrooms", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...payload, methodologies: selected }) });
-    const data = await response.json(); setSaving(false);
-    if (!response.ok) { setMessage(data.error ?? "No se pudo crear el aula."); return; }
-    setClassrooms((current) => [data.classroom, ...current]); setOpen(false); formElement.reset(); setSelected(["ABP"]); setMessage("Aula creada y vinculada a tu perfil docente.");
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 30_000);
+    try {
+      const response = await fetch("/api/classrooms", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...payload, methodologies: selected }), signal: controller.signal });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) { setMessage(data.error ?? `No se pudo crear el aula (${response.status}).`); return; }
+      setClassrooms((current) => [data.classroom, ...current]); setOpen(false); formElement.reset(); setSelected(["ABP"]); setMessage("Aula creada y vinculada a tu perfil docente.");
+    } catch (error) {
+      setMessage(error instanceof DOMException && error.name === "AbortError" ? "La creación tardó demasiado. Revisa la conexión e inténtalo de nuevo." : "No se pudo conectar con el servidor.");
+    } finally {
+      window.clearTimeout(timeout);
+      setSaving(false);
+    }
   }
   return <main className="studio-shell">
     <nav className="studio-nav"><Link href="/" className="brand"><span className="brand-block">E</span><span>EDU<br/><i>SIGNAL</i></span></Link><div><span className="teacher-chip">DOCENTE · {teacherName}</span><button className="signout" onClick={signOut}>Salir</button></div></nav>
