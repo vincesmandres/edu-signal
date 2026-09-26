@@ -27,7 +27,12 @@ function getConnection() {
 export function getDb() {
   if (!client) {
     const connection = getConnection();
-    client = postgres(connection.url, { prepare: connection.prepare, max: 5 });
+    client = postgres(connection.url, {
+      prepare: connection.prepare,
+      max: 1,
+      connect_timeout: 10,
+      idle_timeout: 5,
+    });
   }
   return drizzle(client, { schema });
 }
