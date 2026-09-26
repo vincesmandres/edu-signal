@@ -10,7 +10,7 @@ const approaches = [
   ["PhET", "Aprendizaje por simulación", "Explorar, predecir y explicar con simuladores."],
 ];
 
-export default function ClassroomStudio({ teacherName }: { teacherName: string }) {
+export default function ClassroomStudio({ teacherName, aiEnabled }: { teacherName: string; aiEnabled: boolean }) {
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [selected, setSelected] = useState<string[]>(["ABP"]);
   const [open, setOpen] = useState(false);
@@ -31,7 +31,7 @@ export default function ClassroomStudio({ teacherName }: { teacherName: string }
   }
   return <main className="studio-shell">
     <nav className="studio-nav"><Link href="/" className="brand"><span className="brand-block">E</span><span>EDU<br/><i>SIGNAL</i></span></Link><div><span className="teacher-chip">DOCENTE · {teacherName}</span><button className="signout" onClick={signOut}>Salir</button></div></nav>
-    <header className="studio-hero"><p>ESPACIO DOCENTE</p><h1>Diseña aulas que<br/><em>aprenden haciendo.</em></h1><span>Organiza asignaturas, módulos y evaluaciones en un solo lugar. Cada aula se conecta a un docente responsable.</span><button className="primary" onClick={() => setOpen(true)}>+ Crear aula</button></header>
+    <header className="studio-hero"><p>ESPACIO DOCENTE</p><h1>Diseña aulas que<br/><em>aprenden haciendo.</em></h1><span>Organiza asignaturas, módulos y evaluaciones en un solo lugar. Cada aula se conecta a un docente responsable.</span>{aiEnabled && <Link className="primary" href="/classrooms/generate">Generar con IA →</Link>}<button className={aiEnabled ? "soft" : "primary"} onClick={() => setOpen(true)}>Crear manualmente</button></header>
     <section className="method-grid">{approaches.map(([short, title, description]) => <article key={short}><b>{short}</b><h2>{title}</h2><p>{description}</p></article>)}</section>
      <section className="classroom-section"><div className="section-heading"><div><small>AULAS ACTIVAS</small><h2>Mis asignaturas</h2></div><button onClick={() => setOpen(true)}>Nueva aula →</button></div>{classrooms.length ? <div className="classroom-grid">{classrooms.map((room) => <article className="classroom-card" key={room.id}><small>{room.academicPeriod} · ACTIVA</small><h3>{room.name}</h3><p>{room.subject}</p><div><span>Docente responsable</span><strong>{teacherName}</strong></div>{room.moduleId && <Link className="soft" href={`/classrooms/${room.id}/modules/${room.moduleId}`}>Gestionar módulo →</Link>}</article>)}</div> : <div className="empty-state"><b>Tu espacio docente está listo.</b><p>Crea la primera aula para empezar a construir su módulo de aprendizaje y evaluación.</p><button className="soft" onClick={() => setOpen(true)}>Crear mi primera aula →</button></div>}</section>
     {message && <div className="toast">✦ {message}</div>}

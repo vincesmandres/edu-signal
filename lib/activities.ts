@@ -1,4 +1,6 @@
-export const ACTIVITY_TYPES = ["instruction", "question", "prediction", "simulation", "external_link", "reflection", "reading"] as const;
+import { inquiryCycleConfigSchema } from "@/lib/ai/contracts";
+
+export const ACTIVITY_TYPES = ["instruction", "question", "prediction", "simulation", "external_link", "reflection", "reading", "inquiry_cycle"] as const;
 export const ACTIVITY_STATUSES = ["draft", "published", "archived"] as const;
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 export type ActivityStatus = (typeof ACTIVITY_STATUSES)[number];
@@ -17,9 +19,14 @@ export function validateActivityConfig(type: string, config: unknown): { ok: tru
   if (type === "question" && !["short_text", "long_text"].includes(String(value.responseType ?? "long_text"))) return { ok: false, error: "Tipo de respuesta no válido." };
   if (type === "external_link" && (!isHttpsUrl(value.url) || typeof value.label !== "string")) return { ok: false, error: "El recurso necesita una URL HTTPS y una etiqueta." };
   if (type === "simulation" && (!isHttpsUrl(value.url) || !["phet", "external"].includes(String(value.provider)))) return { ok: false, error: "La simulación necesita un proveedor y una URL HTTPS." };
+  if (type === "inquiry_cycle") {
+    const parsed = inquiryCycleConfigSchema.safeParse(value);
+    if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message || "El ciclo de indagación no es válido." };
+    return { ok: true, config: parsed.data };
+  }
   return { ok: true, config: value };
 }
 
 export function requiresResponse(type: string) {
-  return ["question", "prediction", "reflection"].includes(type);
+  return ["question", "prediction", "reflection", "inquiry_cycle"].includes(type);
 }

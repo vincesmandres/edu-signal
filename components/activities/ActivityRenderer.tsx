@@ -1,11 +1,19 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import InquiryCycleRenderer from "./InquiryCycleRenderer";
 
 type Activity = { id: string; title: string; instructions: string; activityType: string; config: unknown };
 type Evidence = { id: string; title: string; description?: string | null; fileName?: string | null; evidenceType: string; status: string; textContent?: string | null; externalUrl?: string | null } | null;
 
-export default function ActivityRenderer({ activity, initialResponse, completed, initialEvidence }: { activity: Activity & { requiresEvidence?: boolean }; initialResponse: string; completed: boolean; initialEvidence?: Evidence }) {
+type ActivityRendererProps = { activity: Activity & { requiresEvidence?: boolean }; initialResponse: string; completed: boolean; initialEvidence?: Evidence };
+
+export default function ActivityRenderer(props: ActivityRendererProps) {
+  if (props.activity.activityType === "inquiry_cycle") return <><InquiryCycleRenderer activity={props.activity} />{props.activity.requiresEvidence && <EvidenceComposer activityId={props.activity.id} initialEvidence={props.initialEvidence} onChange={() => undefined} />}</>;
+  return <LegacyActivityRenderer {...props} />;
+}
+
+function LegacyActivityRenderer({ activity, initialResponse, completed, initialEvidence }: ActivityRendererProps) {
   const [response, setResponse] = useState(initialResponse);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);

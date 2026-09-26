@@ -47,3 +47,6 @@ next-env.d.ts
 supabase/.temp/
 supabase/.branches/
 *.tsbuildinfo
+
+# Kilo-managed local worktrees are runtime state, not source files.
+.kilo/worktrees/
