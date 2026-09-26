@@ -32,6 +32,8 @@ export function getDb() {
       max: 1,
       connect_timeout: 10,
       idle_timeout: 5,
+      max_lifetime: 30,
+      keep_alive: 5,
     });
   }
   return drizzle(client, { schema });
