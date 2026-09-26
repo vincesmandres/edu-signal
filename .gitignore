@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/test-results/
 
 # next.js
 /.next/
@@ -31,6 +32,7 @@ yarn-error.log*
 # env files (the example template is intentionally tracked)
 .env*
 !.env.example
+!.env.test.example
 
 # provider-local metadata
 .vercel
@@ -43,4 +45,5 @@ next-env.d.ts
 /outputs/
 /work/
 supabase/.temp/
+supabase/.branches/
 *.tsbuildinfo

@@ -10,8 +10,10 @@ export async function POST(_request: Request, context: { params: Promise<{ activ
   if (!activities) return Response.json({ error: "Actividad no encontrada." }, { status: 404 });
   const existing = (await getDb().select().from(studentActivityProgress).where(and(eq(studentActivityProgress.studentId, student.id), eq(studentActivityProgress.activityId, activityId))).limit(1))[0];
   if (existing) return Response.json({ progress: existing });
-  const progress = (await getDb().insert(studentActivityProgress).values({ id: crypto.randomUUID(), studentId: student.id, activityId, status: "in_progress", startedAt: new Date().toISOString() }).returning())[0];
-  return Response.json({ progress }, { status: 201 });
+  const progress = (await getDb().insert(studentActivityProgress).values({ id: crypto.randomUUID(), studentId: student.id, activityId, status: "in_progress", startedAt: new Date().toISOString() }).onConflictDoNothing({ target: [studentActivityProgress.studentId, studentActivityProgress.activityId] }).returning())[0];
+  if (progress) return Response.json({ progress }, { status: 201 });
+  const concurrent = (await getDb().select().from(studentActivityProgress).where(and(eq(studentActivityProgress.studentId, student.id), eq(studentActivityProgress.activityId, activityId))).limit(1))[0];
+  return Response.json({ progress: concurrent });
 }
 
 async function getStudentActivitiesForActivity(activityId: string, studentId: string) {

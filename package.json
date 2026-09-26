@@ -12,24 +12,38 @@
     "cf:deploy:dry": "wrangler deploy --config wrangler.jsonc --dry-run",
     "cf:deploy": "wrangler deploy --config wrangler.jsonc",
     "start": "next start",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs tests/m1-identity.test.mjs tests/m2-m4-activity.test.mjs tests/m5-evidence.test.mjs && tsx --test tests/m6-product-integrity.test.mjs tests/m6.1-authorization.test.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern .open-next --ignore-pattern .kilo",
+    "test": "npm run verify",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern .open-next --ignore-pattern .kilo --ignore-pattern supabase/.temp --ignore-pattern test-results",
     "db:generate": "node scripts/db-generate.mjs",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:m4": "tsx scripts/seed-m4.ts",
+    "supabase:start": "supabase start",
+    "supabase:bootstrap": "node scripts/supabase-bootstrap.mjs",
+    "supabase:bootstrap:idempotent": "node scripts/supabase-bootstrap.mjs --idempotent",
+    "supabase:cleanup": "node scripts/supabase-cleanup.mjs",
+    "supabase:fixtures": "tsx scripts/seed-test-fixtures.ts",
     "verify:live": "tsx scripts/verify-live.ts",
     "auth:seed": "tsx scripts/seed-auth.ts",
     "test:m1": "node --test tests/m1-identity.test.mjs",
     "test:m6": "tsx --test tests/m6-product-integrity.test.mjs",
     "test:m6.1": "tsx --test tests/m6.1-authorization.test.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run typecheck && npm run lint && node --test tests/rendered-html.test.mjs tests/m1-identity.test.mjs tests/m2-m4-activity.test.mjs tests/m5-evidence.test.mjs && tsx --test tests/m6-product-integrity.test.mjs tests/m6.1-authorization.test.mjs && npm run build"
+    "test:static": "node --test tests/rendered-html.test.mjs tests/m1-identity.test.mjs tests/m2-m4-activity.test.mjs tests/m5-evidence.test.mjs && tsx --test tests/m6-product-integrity.test.mjs tests/m6.1-authorization.test.mjs",
+    "test:unit": "node --test --import tsx tests/unit/*.test.ts",
+    "test:api": "tsx tests/api.integration.ts",
+    "test:db": "tsx scripts/test-db.ts",
+    "test:rls": "tsx scripts/test-rls.ts",
+    "test:e2e": "playwright test",
+    "test:preflight": "tsx scripts/test-preflight.ts",
+    "test:migrations": "node scripts/test-migration-gate.mjs",
+    "test:remote-guards": "node scripts/test-remote-guards.mjs",
+    "verify": "node scripts/verify-local.mjs"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "1.20.6",
     "@supabase/ssr": "0.7.0",
     "@supabase/supabase-js": "2.57.0",
-    "@opennextjs/cloudflare": "1.20.6",
     "drizzle-orm": "0.45.2",
     "next": "16.3.3",
     "postgres": "3.4.7",
@@ -38,6 +52,7 @@
     "react-loading-skeleton": "3.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
@@ -48,7 +63,7 @@
     "tailwindcss": "4.2.1",
     "tsx": "4.20.5",
     "typescript": "5.9.3",
-    "wrangler": "4.129.0"
+    "wrangler": "^4.136.3"
   },
   "type": "module"
 }

@@ -1,0 +1,33 @@
+project_id = "edu-signal-test"
+
+[api]
+port = 55421
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 55432
+shadow_port = 55430
+major_version = 15
+
+[studio]
+enabled = false
+
+[local_smtp]
+enabled = true
+host = "127.0.0.1"
+port = 55424
+
+[storage]
+file_size_limit = "10MiB"
+
+[auth]
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["http://127.0.0.1:3000/**"]
+enable_signup = true
+
+[auth.email]
+
+[analytics]
+enabled = false

@@ -21,12 +21,13 @@ export default function ClassroomStudio({ teacherName }: { teacherName: string }
   const toggle = (value: string) => setSelected((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
   async function createClassroom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSaving(true); setMessage("");
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const payload = Object.fromEntries(form.entries()) as Record<string, string>;
     const response = await fetch("/api/classrooms", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...payload, methodologies: selected }) });
     const data = await response.json(); setSaving(false);
     if (!response.ok) { setMessage(data.error ?? "No se pudo crear el aula."); return; }
-    setClassrooms((current) => [data.classroom, ...current]); setOpen(false); event.currentTarget.reset(); setSelected(["ABP"]); setMessage("Aula creada y vinculada a tu perfil docente.");
+    setClassrooms((current) => [data.classroom, ...current]); setOpen(false); formElement.reset(); setSelected(["ABP"]); setMessage("Aula creada y vinculada a tu perfil docente.");
   }
   return <main className="studio-shell">
     <nav className="studio-nav"><Link href="/" className="brand"><span className="brand-block">E</span><span>EDU<br/><i>SIGNAL</i></span></Link><div><span className="teacher-chip">DOCENTE · {teacherName}</span><button className="signout" onClick={signOut}>Salir</button></div></nav>
